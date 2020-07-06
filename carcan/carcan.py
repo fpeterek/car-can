@@ -9,15 +9,21 @@ from carcan.steering import Steering
 
 class CanInterface:
 
-    def encode(self, num: int) -> list:
+    @staticmethod
+    def encode(num: int) -> list:
         first = num & 255
         second = (num >> 8) & 255
         return [first, second]
 
     def drive_message(self):
-        speed = self.encode(Driving.neutral/2)
-        steer = self.encode(Steering.left_max)
-        return can.Message(arbitration_id=ID.command.drive, data=speed + steer + [0, 0, 0, 0])
+        steer = CanInterface.encode(self.desired_steering_angle)
+        speed = CanInterface.encode(self.desired_velocity)
+        return can.Message(arbitration_id=ID.command.drive, data=steer + speed + [0, 0, 0, 0])
+
+    def recreate_task(self, msg):
+        if self.drive_task is not None:
+            self.drive_task.stop()
+        self.drive_task = self.bus.send_periodic(self.drive_message(), 0.02)
 
     def __init__(self, interface=None, channel=None, bitrate=None):
         default_conf = can.util.load_config()
@@ -32,10 +38,13 @@ class CanInterface:
         self.bus = can.interface.Bus(bustype=bustype, channel=channel, bitrate=bitrate)
         self.notifier = can.Notifier(self.bus, listeners)
 
-        self.desired_steering_angle = 0
-        self.desired_velocity = 0
+        self.desired_steering_angle = Steering.neutral
+        self.desired_velocity = Driving.neutral
 
         self.drive_task = self.bus.send_periodic(self.drive_message(), 0.02)
 
-    def steer(self, degree: float):
-        pass
+    def steer(self, degree: int):
+        self.desired_steering_angle = degree
+
+    def move(self, speed: int):
+        self.desired_velocity = speed

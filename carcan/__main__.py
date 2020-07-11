@@ -1,4 +1,4 @@
-import test
+import carcan.test as test
 
 
 def main():

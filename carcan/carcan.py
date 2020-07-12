@@ -44,7 +44,7 @@ class CanInterface:
         default_conf = can.util.load_config()
         bustype = interface if interface else default_conf['interface']
         channel = channel if channel else default_conf['channel']
-        bitrate = bitrate if bitrate is not None else default_conf['bitrate']
+        bitrate = bitrate if bitrate else default_conf['bitrate']
 
         listeners = [self._create_listener()]
         if os.getenv('CAN_DEBUG'):

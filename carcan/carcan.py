@@ -11,34 +11,58 @@ from carcan.steering import Steering
 
 class CanInterface:
 
-    @staticmethod
-    def encode(num: int) -> List[int]:
-        first = num & 255
-        second = (num >> 8) & 255
-        return [first, second]
-
     def _drive_message(self) -> can.Message:
-        steer = CanInterface.encode(self._desired_steering_angle)
-        speed = CanInterface.encode(self._desired_velocity)
-        return can.Message(arbitration_id=ID.command.drive, data=steer + speed + [0, 0, 0, 0])
+        steer = self._desired_steering_angle
+        speed = self._desired_velocity
+        return can.Message(arbitration_id=ID.command.drive, data=[steer, speed])
 
-    def _create_task(self) -> can.CyclicSendTaskABC:
-        return self._bus.send_periodic(self._drive_message(), 0.02)
+    def _create_drive_task(self) -> can.CyclicSendTaskABC:
+        return self._send_periodic(self._drive_message())
 
-    def _recreate_task(self) -> None:
+    def _create_check_task(self) -> can.CyclicSendTaskABC:
+        return self._send_periodic(self._create_check_message())
+
+    def _send_periodic(self, msg: can.Message):
+        return self._bus.send_periodic(msg=msg, period=0.05)
+
+    def _recreate_drive_task(self) -> None:
         if self._drive_task is not None:
             self._drive_task.stop()
-        self._drive_task = self._create_task()
+        self._drive_task = self._create_drive_task()
 
-    def _set_current_steering_angle(self, new_val: int) -> None:
-        self._steering_angle = new_val
+    def _recreate_check_task(self) -> None:
+        if self._check_task is not None:
+            self._check_task.stop()
+        self._check_task = self._create_check_task()
 
-    def _set_current_velocity(self, new_val: int) -> None:
-        self._velocity = new_val
+    def _set_driving_info(self, steer: int, speed: int, ctrl: bool) -> None:
+        self._steering_angle = steer
+        self._velocity = speed
+        self._has_control = ctrl
+
+    def _set_check(self, ok: bool):
+        self._ok = ok
+        if not ok:
+            self._recreate_check_task()
+
+    @staticmethod
+    def _create_status_message() -> can.Message:
+        online = 1
+        ctrl = 1
+        return can.Message(arbitration_id=ID.command.status, data=[online, ctrl])
+
+    @property
+    def is_ok(self):
+        return self._ok and self._has_control
+
+    def _create_check_message(self) -> can.Message:
+        stop = int(not self.is_ok)
+        tx_check = 1
+        return can.Message(arbitration_id=ID.command.check, data=[stop, tx_check])
 
     def _create_listener(self) -> CanListener:
-        return CanListener(steer_setter=self._set_current_steering_angle,
-                           velocity_setter=self._set_current_velocity)
+        return CanListener(check_setter=self._set_check,
+                           driving_info_setter=self._set_driving_info)
 
     def __init__(self, interface=None, channel=None, bitrate=None):
         default_conf = can.util.load_config()
@@ -58,16 +82,20 @@ class CanInterface:
 
         self._steering_angle = 0
         self._velocity = 0
+        self._has_control = True
+        self._ok = True
 
-        self._drive_task = self._create_task()
+        self._drive_task = self._create_drive_task()
+        self._status_task = self._send_periodic(self._create_status_message())
+        self._check_task = self._create_check_task()
 
     def steer(self, degree: int) -> None:
         self._desired_steering_angle = degree
-        self._recreate_task()
+        self._recreate_drive_task()
 
     def move(self, speed: int) -> None:
         self._desired_velocity = speed
-        self._recreate_task()
+        self._recreate_drive_task()
 
     def stop(self) -> None:
         self._bus.shutdown()

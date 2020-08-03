@@ -1,5 +1,4 @@
 import os
-from typing import List
 
 import can
 
@@ -57,7 +56,7 @@ class CanInterface:
 
     def _create_check_message(self) -> can.Message:
         stop = int(not self.is_ok)
-        tx_check = 1
+        tx_check = 255
         return can.Message(arbitration_id=ID.command.check, data=[stop, tx_check])
 
     def _create_listener(self) -> CanListener:
@@ -90,11 +89,11 @@ class CanInterface:
         self._check_task = self._create_check_task()
 
     def steer(self, degree: int) -> None:
-        self._desired_steering_angle = degree
+        self._desired_steering_angle = Steering.to_can(degree)
         self._recreate_drive_task()
 
     def move(self, speed: int) -> None:
-        self._desired_velocity = speed
+        self._desired_velocity = Driving.to_can(speed)
         self._recreate_drive_task()
 
     def stop(self) -> None:
@@ -102,8 +101,8 @@ class CanInterface:
 
     @property
     def steering_angle(self) -> int:
-        return self._steering_angle
+        return Steering.to_value(self._steering_angle)
 
     @property
     def velocity(self) -> int:
-        return self._velocity
+        return Driving.to_value(self._velocity)

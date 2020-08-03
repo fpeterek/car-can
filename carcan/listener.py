@@ -11,12 +11,8 @@ class CanListener(can.listener.Listener):
             ID.feedback.info: self.decode_drive_data,
         }
 
-        self.set_driving_info = driving_info_setter
         self.set_check = check_setter
-
-    @staticmethod
-    def decode(b1: int, b2: int) -> int:
-        return (b1 << 0) + (b2 << 8)
+        self.set_driving_info = driving_info_setter
 
     def decode_check(self, msg: can.Message):
         value = msg.data[1]

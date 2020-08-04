@@ -41,19 +41,23 @@ class CanInterface:
             self._check_task.stop()
         self._check_task = self._create_check_task()
 
+    def _check(self) -> None:
+        if not self.is_ok:
+            self._recreate_check_task()
+
     def _set_driving_info(self, steer: int, speed: int, ctrl: bool) -> None:
         if self._debug:
             print(f"Received info (steer={steer}, v={speed}, c={ctrl})")
         self._steering_angle = steer
         self._velocity = speed
         self._has_control = ctrl
+        self._check()
 
     def _set_check(self, ok: bool):
         if self._debug:
             print(f"Received check ({'ok' if ok else 'not ok'})")
         self._ok = ok
-        if not self.is_ok:
-            self._recreate_check_task()
+        self._check()
 
     @staticmethod
     def _create_status_message() -> can.Message:

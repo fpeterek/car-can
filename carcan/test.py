@@ -7,30 +7,28 @@ from driving import Driving
 
 
 def steer_left(car: CanInterface) -> None:
-    car.steer(Steering.left_max)
-    while car.steering_angle > Steering.left_max:
+    car.steer(Steering.max_left)
+    while car.steering_angle > Steering.max_left:
         time.sleep(0.05)
 
 
 def steer_right(car: CanInterface) -> None:
-    car.steer(Steering.right_max)
-    while car.steering_angle < Steering.right_max:
+    car.steer(Steering.max_right)
+    while car.steering_angle < Steering.max_right:
         time.sleep(0.05)
 
 
 def revert(car: CanInterface) -> None:
-    car.steer(Steering.neutral)
+    car.forward()
     while car.steering_angle < Steering.neutral:
         time.sleep(0.05)
 
 
-def steering_test():
-    car = CanInterface()
-    for i in range(0, 5):
+def steering_test(car: CanInterface):
+    for i in range(0, 3):
         steer_left(car)
         steer_right(car)
     revert(car)
-    car.stop()
 
 
 def forward(car: CanInterface) -> None:
@@ -46,16 +44,21 @@ def backwards(car: CanInterface) -> None:
 
 
 def stop(car: CanInterface) -> None:
-    car.move(Driving.neutral)
-    while car.velocity != Driving.neutral:
+    car.stop()
+    while car.velocity != Driving.zero:
         time.sleep(0.05)
 
 
-def driving_test():
-    car = CanInterface()
-    for i in range(0, 5):
+def driving_test(car: CanInterface):
+    for i in range(0, 3):
         forward(car)
         backwards(car)
     stop(car)
-    car.stop()
+
+
+def car_test():
+    car = CanInterface()
+    steering_test(car)
+    driving_test(car)
+    car.shutdown()
 

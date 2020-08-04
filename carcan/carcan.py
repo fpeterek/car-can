@@ -95,7 +95,7 @@ class CanInterface:
         self._notifier = can.Notifier(self._bus, listeners)
 
         self._desired_steering_angle = Steering.neutral
-        self._desired_velocity = Driving.neutral
+        self._desired_velocity = Driving.zero
 
         self._steering_angle = 0
         self._velocity = 0
@@ -115,6 +115,12 @@ class CanInterface:
         self._recreate_drive_task()
 
     def stop(self) -> None:
+        self.move(Driving.zero)
+
+    def forward(self) -> None:
+        self.steer(Steering.neutral)
+
+    def shutdown(self) -> None:
         self._bus.shutdown()
 
     @property

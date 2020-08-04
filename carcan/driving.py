@@ -2,7 +2,7 @@ from typing import Union
 
 
 class Driving:
-    neutral = 0
+    zero = 0
     max_backwards = -50
     max_forward = 50
 
@@ -25,7 +25,7 @@ class Driving:
     @staticmethod
     def to_can(value: Union[int, float]) -> int:
         value *= Driving.ratio
-        value += Driving.neutral
+        value += Driving.can_offset
         return Driving.trunc_can(value)
 
     @staticmethod

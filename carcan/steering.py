@@ -25,7 +25,7 @@ class Steering:
     @staticmethod
     def to_can(value: Union[int, float]) -> int:
         value *= Steering.ratio
-        value += Steering.neutral
+        value += Steering.can_offset
         return Steering.trunc_can(value)
 
     @staticmethod

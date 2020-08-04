@@ -2,8 +2,7 @@ import carcan.test as test
 
 
 def main():
-    test.steering_test()
-    test.driving_test()
+    test.car_test()
 
 
 if __name__ == '__main__':

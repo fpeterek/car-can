@@ -8,6 +8,10 @@ from carcan.listener import CanListener
 from carcan.steering import Steering
 
 
+def env_is_true(env: str) -> bool:
+    return os.getenv(env) and os.getenv(env).lower() in ('true', '1')
+
+
 class CanInterface:
 
     def _drive_message(self) -> can.Message:
@@ -20,6 +24,9 @@ class CanInterface:
 
     def _create_check_task(self) -> can.CyclicSendTaskABC:
         return self._send_periodic(self._create_check_message())
+
+    def _create_status_task(self) -> can.CyclicSendTaskABC:
+        return self._send_periodic(self._create_status_message())
 
     def _send_periodic(self, msg: can.Message):
         return self._bus.send_periodic(msg=msg, period=0.05)
@@ -35,13 +42,17 @@ class CanInterface:
         self._check_task = self._create_check_task()
 
     def _set_driving_info(self, steer: int, speed: int, ctrl: bool) -> None:
+        if self._debug:
+            print(f"Received info (steer={steer}, v={speed}, c={ctrl})")
         self._steering_angle = steer
         self._velocity = speed
         self._has_control = ctrl
 
     def _set_check(self, ok: bool):
+        if self._debug:
+            print(f"Received check ({'ok' if ok else 'not ok'})")
         self._ok = ok
-        if not ok:
+        if not self.is_ok:
             self._recreate_check_task()
 
     @staticmethod
@@ -70,8 +81,11 @@ class CanInterface:
         bitrate = bitrate if bitrate else default_conf['bitrate']
 
         listeners = [self._create_listener()]
-        if os.getenv('CAN_DEBUG'):
+        if env_is_true('CAN_PRINTER'):
             listeners.append(can.Printer())
+
+        if env_is_true('CAN_DEBUG'):
+            self._debug = True
 
         self._bus = can.interface.Bus(bustype=bustype, channel=channel, bitrate=bitrate)
         self._notifier = can.Notifier(self._bus, listeners)
@@ -85,7 +99,7 @@ class CanInterface:
         self._ok = True
 
         self._drive_task = self._create_drive_task()
-        self._status_task = self._send_periodic(self._create_status_message())
+        self._status_task = self._create_status_task()
         self._check_task = self._create_check_task()
 
     def steer(self, degree: int) -> None:

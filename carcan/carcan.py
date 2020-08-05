@@ -1,11 +1,12 @@
 import os
+import time
 
 import can
 
-from carcan.driving import Driving
-from carcan.id import ID
-from carcan.listener import CanListener
-from carcan.steering import Steering
+from driving import Driving
+from id import ID
+from listener import CanListener
+from steering import Steering
 
 
 def env_is_true(env: str) -> bool:
@@ -17,7 +18,7 @@ class CanInterface:
     def _drive_message(self) -> can.Message:
         steer = self._desired_steering_angle
         speed = self._desired_velocity
-        return can.Message(arbitration_id=ID.command.drive, data=[steer, speed])
+        return can.Message(arbitration_id=ID.command.drive, data=[steer, speed, 0, 0, 0, 0, 0, 0], is_extended_id=False)
 
     def _create_drive_task(self) -> can.CyclicSendTaskABC:
         return self._send_periodic(self._drive_message())
@@ -63,7 +64,7 @@ class CanInterface:
     def _create_status_message() -> can.Message:
         online = 1
         ctrl = 1
-        return can.Message(arbitration_id=ID.command.status, data=[online, ctrl])
+        return can.Message(arbitration_id=ID.command.status, data=[online, ctrl, 0, 0, 0, 0, 0, 0], is_extended_id=False)
 
     @property
     def is_ok(self):
@@ -72,17 +73,17 @@ class CanInterface:
     def _create_check_message(self) -> can.Message:
         stop = int(not self.is_ok)
         tx_check = 255
-        return can.Message(arbitration_id=ID.command.check, data=[stop, tx_check])
+        return can.Message(arbitration_id=ID.command.check, data=[stop, tx_check, 0, 0, 0, 0, 0, 0], is_extended_id=False)
 
     def _create_listener(self) -> CanListener:
         return CanListener(check_setter=self._set_check,
                            driving_info_setter=self._set_driving_info)
 
     def __init__(self, interface=None, channel=None, bitrate=None):
-        default_conf = can.util.load_config()
+        # default_conf = can.util.load_config()
         bustype = interface if interface else default_conf['interface']
         channel = channel if channel else default_conf['channel']
-        bitrate = bitrate if bitrate else default_conf['bitrate']
+        # bitrate = bitrate if bitrate else default_conf['bitrate']
 
         listeners = [self._create_listener()]
         if env_is_true('CAN_PRINTER'):
@@ -91,20 +92,26 @@ class CanInterface:
         if env_is_true('CAN_DEBUG'):
             self._debug = True
 
-        self._bus = can.interface.Bus(bustype=bustype, channel=channel, bitrate=bitrate)
+        self._bus = can.interface.Bus(bustype=bustype, channel=channel)
         self._notifier = can.Notifier(self._bus, listeners)
 
-        self._desired_steering_angle = Steering.neutral
-        self._desired_velocity = Driving.zero
+        self._desired_steering_angle = Steering.can_offset
+        self._desired_velocity = Driving.can_offset
 
         self._steering_angle = 0
         self._velocity = 0
         self._has_control = True
         self._ok = True
 
-        self._drive_task = self._create_drive_task()
+        self._status_task = None
+        self._drive_task = None
+        self._check_task = None
+
         self._status_task = self._create_status_task()
+        time.sleep(0.2)
+        self._drive_task = self._create_drive_task()
         self._check_task = self._create_check_task()
+        time.sleep(0.2)
 
     def steer(self, degree: int) -> None:
         self._desired_steering_angle = Steering.to_can(degree)

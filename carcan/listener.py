@@ -1,6 +1,6 @@
 import can
 
-from carcan.id import ID
+from id import ID
 
 
 class CanListener(can.listener.Listener):

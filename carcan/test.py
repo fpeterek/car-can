@@ -1,4 +1,4 @@
-from carcan import CanInterface
+from carinterface import CanInterface
 from steering import Steering
 
 import time

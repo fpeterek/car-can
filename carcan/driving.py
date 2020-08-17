@@ -3,8 +3,10 @@ from typing import Union
 
 class Driving:
     zero = 0
-    max_backwards = -50
-    max_forward = 50
+    # I don't know the real max velocity of the vehicle so we can use a percentage for now
+    max_backwards = -100
+    max_forward = 100
+    error_tolerance = max_forward / 10
 
     can_offset = 127
     can_min = 0

@@ -1,4 +1,4 @@
-import test as test
+import test
 
 
 def main():

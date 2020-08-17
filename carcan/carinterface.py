@@ -44,7 +44,13 @@ class CanInterface:
 
     def _check(self) -> None:
         if not self.is_ok:
-            self._recreate_check_task()
+            self._desired_steering_angle = Steering.can_offset
+            self._desired_velocity = Driving.can_offset
+            self._drive_task.stop()
+            self._drive_task = None
+            while not self.is_ok:
+                time.sleep(0.02)
+            self._recreate_drive_task()
 
     def _set_driving_info(self, steer: int, speed: int, ctrl: bool) -> None:
         if self._debug:
@@ -64,7 +70,9 @@ class CanInterface:
     def _create_status_message() -> can.Message:
         online = 1
         ctrl = 1
-        return can.Message(arbitration_id=ID.command.status, data=[online, ctrl, 0, 0, 0, 0, 0, 0], is_extended_id=False)
+        return can.Message(arbitration_id=ID.command.status,
+                           data=[online, ctrl, 0, 0, 0, 0, 0, 0],
+                           is_extended_id=False)
 
     @property
     def is_ok(self):
@@ -73,16 +81,18 @@ class CanInterface:
     def _create_check_message(self) -> can.Message:
         stop = int(not self.is_ok)
         tx_check = 255
-        return can.Message(arbitration_id=ID.command.check, data=[stop, tx_check, 0, 0, 0, 0, 0, 0], is_extended_id=False)
+        return can.Message(arbitration_id=ID.command.check,
+                           data=[stop, tx_check, 0, 0, 0, 0, 0, 0],
+                           is_extended_id=False)
 
     def _create_listener(self) -> CanListener:
         return CanListener(check_setter=self._set_check,
                            driving_info_setter=self._set_driving_info)
 
-    def __init__(self, interface=None, channel=None, bitrate=None):
+    def __init__(self, interface=None, channel=None):
         # default_conf = can.util.load_config()
-        bustype = interface if interface else default_conf['interface']
-        channel = channel if channel else default_conf['channel']
+        bustype = interface  # if interface else default_conf['interface']
+        channel = channel  # if channel else default_conf['channel']
         # bitrate = bitrate if bitrate else default_conf['bitrate']
 
         listeners = [self._create_listener()]
@@ -128,6 +138,12 @@ class CanInterface:
         self.steer(Steering.neutral)
 
     def shutdown(self) -> None:
+        if self._drive_task is not None:
+            self._drive_task.stop()
+        if self._status_task is not None:
+            self._status_task.stop()
+        if self._check_task is not None:
+            self._check_task.stop()
         self._bus.shutdown()
 
     @property

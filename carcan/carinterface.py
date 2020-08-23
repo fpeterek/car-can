@@ -13,7 +13,7 @@ def env_is_true(env: str) -> bool:
     return os.getenv(env) and os.getenv(env).lower() in ('true', '1')
 
 
-class CanInterface:
+class CarInterface:
 
     def _drive_message(self) -> can.Message:
         steer = self._desired_steering_angle
@@ -129,6 +129,11 @@ class CanInterface:
 
     def move(self, speed: int) -> None:
         self._desired_velocity = Driving.to_can(speed)
+        self._recreate_drive_task()
+
+    def drive(self, velocity: int, steering_degree: int) -> None:
+        self._desired_velocity = Driving.to_can(velocity)
+        self._desired_steering_angle = Steering.to_can(steering_degree)
         self._recreate_drive_task()
 
     def stop(self) -> None:

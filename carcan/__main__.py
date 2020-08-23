@@ -1,8 +1,9 @@
-import test
+import server
 
 
 def main():
-    test.car_test()
+    # test.car_test()
+    server.Server.serve()
 
 
 if __name__ == '__main__':

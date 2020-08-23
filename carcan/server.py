@@ -25,7 +25,7 @@ class Server:
     @staticmethod
     def serve(car: CarInterface = None, host: str = None, port: int = None):
 
-        # Server._car = car if car is not None else CarInterface(interface="socketcan", channel="can0")
+        Server._car = car if car is not None else CarInterface(interface="socketcan", channel="can0")
 
         if not host:
             host = os.getenv("SERVER_HOST")

@@ -38,8 +38,8 @@ class Server:
             if debug:
                 print(f'Driving data (v, s) = ({v}, {s})')
 
-            v = v.to_bytes(1, 'little')
-            s = s.to_bytes(1, 'little')
+            v = v.to_bytes(1, 'little', signed=True)
+            s = s.to_bytes(1, 'little', signed=True)
             self.request.sendall(v + s)
 
         def handle(self):

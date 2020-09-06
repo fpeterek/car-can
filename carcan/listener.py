@@ -16,7 +16,7 @@ class CanListener(can.listener.Listener):
 
     def decode_check(self, msg: can.Message):
         value = msg.data[1]
-        self.set_check(bool(value))
+        self.set_check(value)
 
     def decode_drive_data(self, msg: can.Message):
         steer = msg.data[0]

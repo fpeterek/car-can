@@ -34,26 +34,38 @@ class Server:
 
             v = Server._car.velocity if Server._car is not None else 0
             s = Server._car.steering_angle if Server._car is not None else 0
-
+            b = int(Server._car.ebrake_enabled if Server._car is not None else False)
             if debug:
                 print(f'Driving data (v, s) = ({v}, {s})')
 
             v = v.to_bytes(1, 'little', signed=True)
             s = s.to_bytes(1, 'little', signed=True)
-            self.request.sendall(v + s)
+            b = b.to_bytes(1, 'little', signed=True)
+            self.request.sendall(v + s + b)
+
+        def ebrake(self, brake: bool):
+            if debug:
+                print(f'Emergency brake {["released", "engaged"][int(brake)]}')
+
+            if Server._car is not None:
+                Server._car.set_ebrake(brake)
+
+            self.healthcheck()
 
         def handle(self):
             data = self.request.recv(3)
-            t = int.from_bytes(data[0:1], 'little', signed=False)
-            v = int.from_bytes(data[1:2], 'little', signed=True)
-            s = int.from_bytes(data[2:3], 'little', signed=True)
+            message_type = int.from_bytes(data[0:1], 'little', signed=False)
+            b1 = int.from_bytes(data[1:2], 'little', signed=True)
+            b2 = int.from_bytes(data[2:3], 'little', signed=True)
 
-            if t == 0:
-                self.drive(v, s)
-            elif t == 1:
+            if message_type == 0:
+                self.drive(v=b1, s=b2)
+            elif message_type == 1:
                 self.healthcheck()
-            elif t == 2:
+            elif message_type == 2:
                 self.info()
+            elif message_type == 3:
+                self.ebrake(brake=bool(b1))
 
     @staticmethod
     def serve(car: CarInterface = None, host: str = None, port: int = None):

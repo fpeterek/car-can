@@ -26,6 +26,7 @@ class Driving:
 
     @staticmethod
     def to_can(value: Union[int, float]) -> int:
+        value *= -1  # Values are flipped -> 0 means forward, 254 means backwards
         value *= Driving.ratio
         value += Driving.can_offset
         return Driving.trunc_can(value)
@@ -34,4 +35,5 @@ class Driving:
     def to_value(value: Union[int, float]) -> int:
         value -= Driving.can_offset
         value /= Driving.ratio
+        value *= -1  # Values are flipped -> 0 means forward, 254 means backwards
         return Driving.trunc_value(value)

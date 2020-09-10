@@ -39,13 +39,16 @@ class CarInterface:
         return self._bus.send_periodic(msg=msg, period=0.05)
 
     def _modify_drive_task(self) -> None:
-        self._drive_task.modify_data(self._drive_message)
+        if self._check_task is not None:
+            self._drive_task.modify_data(self._drive_message)
 
     def _modify_check_task(self) -> None:
-        self._check_task.modify_data(self._check_message)
+        if self._check_task is not None:
+            self._check_task.modify_data(self._check_message)
 
     def _shutdown_status_task(self) -> None:
-        self._status_task.modify_data(self._create_status_message(request_control=False))
+        if self._status_task is not None:
+            self._status_task.modify_data(self._create_status_message(request_control=False))
 
     def _set_driving_info(self, steer: int, speed: int, ctrl: bool) -> None:
         if self._debug:
@@ -95,12 +98,11 @@ class CarInterface:
         channel = channel  # if channel else default_conf['channel']
         # bitrate = bitrate if bitrate else default_conf['bitrate']
 
+        self._debug = env_is_true('CAN_DEBUG')
+
         listeners = [self._create_listener()]
         if env_is_true('CAN_PRINTER'):
             listeners.append(can.Printer())
-
-        if env_is_true('CAN_DEBUG'):
-            self._debug = True
 
         self._bus = can.interface.Bus(bustype=bustype, channel=channel)
         self._notifier = can.Notifier(self._bus, listeners)

@@ -3,6 +3,7 @@ import time
 from threading import Lock
 
 import can
+import gpsd
 
 from driving import Driving
 from id import ID
@@ -104,6 +105,8 @@ class CarInterface:
         if env_is_true('CAN_PRINTER'):
             listeners.append(can.Printer())
 
+        gpsd.connect()
+
         self._bus = can.interface.Bus(bustype=bustype, channel=channel)
         self._notifier = can.Notifier(self._bus, listeners)
 
@@ -174,3 +177,8 @@ class CarInterface:
     @property
     def velocity(self) -> int:
         return Driving.to_value(self._velocity)
+
+    @property
+    def gps_position(self):
+        return gpsd.get_current().position()
+

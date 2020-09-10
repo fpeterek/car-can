@@ -52,6 +52,21 @@ class Server:
 
             self.healthcheck()
 
+        def position(self):
+            ok = 0
+            try:
+                x, y = 0, 0 if Server._car is None else Server._car.gps_position
+                ok = int(Server._car is not None)
+            except:
+                x, y = 0, 0
+            x = int(x * 10000000)
+            y = int(x * 10000000)
+            ok = ok.to_bytes(1, 'little', signed=False)
+            x = x.to_bytes(8, 'little', signed=True)
+            y = y.to_bytes(8, 'little', signed=True)
+
+            self.request.sendall(ok + x + y)
+
         def handle(self):
             data = self.request.recv(3)
             message_type = int.from_bytes(data[0:1], 'little', signed=False)
@@ -66,6 +81,8 @@ class Server:
                 self.info()
             elif message_type == 3:
                 self.ebrake(brake=bool(b1))
+            elif message_type == 4:
+                self.position()
 
     @staticmethod
     def serve(car: CarInterface = None, host: str = None, port: int = None):

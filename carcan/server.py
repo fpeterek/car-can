@@ -55,12 +55,13 @@ class Server:
         def position(self):
             ok = 0
             try:
-                x, y = 0, 0 if Server._car is None else Server._car.gps_position
+                x, y = (0, 0) if Server._car is None else Server._car.gps_position
                 ok = int(Server._car is not None)
             except:
                 x, y = 0, 0
-            x = int(x * 10000000)
-            y = int(x * 10000000)
+            x = int(x * 10000000000)
+            y = int(y * 10000000000)
+            print('x:', x, 'y:', y, 'ok:', ok)
             ok = ok.to_bytes(1, 'little', signed=False)
             x = x.to_bytes(8, 'little', signed=True)
             y = y.to_bytes(8, 'little', signed=True)

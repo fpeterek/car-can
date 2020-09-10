@@ -180,5 +180,7 @@ class CarInterface:
 
     @property
     def gps_position(self):
-        return gpsd.get_current().position()
+        pos = gpsd.get_current().position()
+        print(pos)
+        return pos  # gpsd.get_current().position()
 

@@ -18,7 +18,7 @@ class Server:
                 print(f'Received (v, s) = ({v}, {s})')
 
             if Server._car is not None:
-                Server._car.drive(v, s)
+                Server._car.drive(v / 10, s)
 
             self.healthcheck()
 
@@ -32,7 +32,7 @@ class Server:
 
         def info(self):
 
-            v = Server._car.velocity if Server._car is not None else 0
+            v = (Server._car.velocity if Server._car is not None else 0) * 10
             s = Server._car.steering_angle if Server._car is not None else 0
             b = int(Server._car.ebrake_enabled if Server._car is not None else False)
             if debug:

@@ -3,9 +3,8 @@ from typing import Union
 
 class Driving:
     zero = 0
-    # I don't know the real max velocity of the vehicle so we can use a percentage for now
-    max_backwards = -100
-    max_forward = 100
+    max_backwards = -30 / 3.6  # m/s
+    max_forward = 30 / 3.6  # m/s
     error_tolerance = max_forward / 10
 
     can_offset = 127
@@ -15,8 +14,7 @@ class Driving:
     ratio = (can_max - can_offset) / max_forward
 
     @staticmethod
-    def trunc_value(value: Union[int, float]) -> int:
-        value = int(value)  # Ensure value is int
+    def trunc_value(value: Union[int, float]) -> float:
         return max(min(Driving.max_forward, value), Driving.max_backwards)
 
     @staticmethod
@@ -32,7 +30,7 @@ class Driving:
         return Driving.trunc_can(value)
 
     @staticmethod
-    def to_value(value: Union[int, float]) -> int:
+    def to_value(value: Union[int, float]) -> float:
         value -= Driving.can_offset
         value /= Driving.ratio
         value *= -1  # Values are flipped -> 0 means forward, 254 means backwards

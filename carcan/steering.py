@@ -25,7 +25,6 @@ class Steering:
 
     @staticmethod
     def to_can(value: Union[int, float]) -> int:
-        value *= -1  # Values are flipped -> 0 means left, 254 means right
         value *= Steering.ratio
         value += Steering.can_offset
         return Steering.trunc_can(value)
@@ -34,6 +33,5 @@ class Steering:
     def to_value(value: Union[int, float]) -> int:
         value -= Steering.can_offset
         value /= Steering.ratio
-        value *= -1  # Values are flipped -> 0 means left, 254 means right
         return Steering.trunc_value(value)
 

@@ -1,2 +1,2 @@
 python-can
-
+gpsd-py3

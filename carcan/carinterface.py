@@ -37,7 +37,7 @@ class CarInterface:
         return self._send_periodic(self._create_status_message(request_control=True))
 
     def _send_periodic(self, msg: can.Message) -> can.ModifiableCyclicTaskABC:
-        return self._bus.send_periodic(msg=msg, period=0.05)
+        return self._bus.send_periodic(msg=msg, period=0.02)
 
     def _modify_drive_task(self) -> None:
         if self._check_task is not None:
@@ -117,7 +117,7 @@ class CarInterface:
         self._velocity = 0
         self._tx_check = 0
         self._check_received = self._time_ms
-        self._check_threshold = 50 + 20  # 50 ms message cycle plus 20 ms extra
+        self._check_threshold = 20 + 10  # 20 ms message cycle plus 10 ms extra
         self._has_control = True
         self._ebrake = False
 

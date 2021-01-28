@@ -4,10 +4,10 @@ from tx_message import TxMessage, DriveMessage, CheckMessage
 
 
 class Transmitter:
-    def __init__(self, interface, channel):
+    def __init__(self, bus: can.interface.Bus):
         self.drive = None
         self.check = None
-        self._bus = can.interface.Bus(bustype=interface, channel=channel)
+        self._bus = bus
 
     def _create_periodic(self, msg: TxMessage) -> can.ModifiableCyclicTaskABC:
         return self._bus.send_periodic(msg=msg.can_message, period=msg.period)

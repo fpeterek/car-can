@@ -62,6 +62,9 @@ class CheckMessage(TxMessage):
         self.reserved1 = 0
         self.reserved2 = 0
 
+    def set_tx_check(self, rx_check: int) -> None:
+        self.tx_check = (rx_check + 1) % 256
+
     @property
     def data(self) -> List[int]:
         return [

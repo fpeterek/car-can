@@ -1,7 +1,9 @@
 from threading import Lock
 from typing import Union
+import time
 
 import can
+import gpsd
 
 from tx_message import DriveMessage, CheckMessage
 from transmitter import Transmitter
@@ -19,8 +21,13 @@ class Car:
         self.transmitter = Transmitter(self._bus)
         self.receiver = Receiver(self._bus, self.update)
         self.data = CarData()
+        self.last_update = time.time()
 
         self.lock = Lock()
+
+        gpsd.connect()
+
+        self.send_messages()
 
     def locked(self, fun):
         def perform_locked(*args, **kwargs):
@@ -32,10 +39,20 @@ class Car:
 
         return perform_locked
 
+    @locked
     def update(self, data: CarData):
+        self.last_update = time.time()
         self.data = data
         self.tx_check(data.rx_check)
         self.periodic_update()
+
+    @property
+    def is_outdated(self):
+        return time.time() - self.last_update > 1.0
+
+    @property
+    def is_ok(self):
+        return self.data.has_control and not self.is_outdated
 
     @locked
     def periodic_update(self):
@@ -66,9 +83,44 @@ class Car:
         self.drive_msg.steering_level = precision
 
     @locked
+    def drive(self, v: float, s: float) -> None:
+        self.drive_msg.velocity = v
+        self.drive_msg.steering = s
+
+    @locked
     def release_control(self) -> None:
         self.drive_msg.ctrl = 0
 
     @locked
+    def shutdown(self) -> None:
+        self.release_control()
+        self.periodic_update()
+
+        time.sleep(0.2)
+        self.transmitter.shutdown()
+        time.sleep(0.2)
+        self._bus.shutdown()
+
+    @locked
     def tx_check(self, rx_check: int) -> None:
         self.check_msg.set_tx_check(rx_check)
+
+    @property
+    def velocity(self) -> float:
+        return self.data.velocity
+
+    @property
+    def steering_angle(self) -> float:
+        return self.data.steering_angle
+
+    @property
+    def ebrake_enabled(self) -> bool:
+        return self.check_msg.stop
+
+    @locked
+    def set_ebrake(self, enabled: bool) -> None:
+        self.check_msg.stop = enabled
+
+    @property
+    def gps_position(self):
+        return gpsd.get_current().position()

@@ -39,9 +39,9 @@ class DriveMessage(TxMessage):
         self.status = 1
         self.ctrl = 1
         self.velocity = 0
-        self.acceleration_level = 0
+        self.acceleration_level = 1
         self.steering = 0
-        self.steering_level = 0
+        self.steering_level = 1
 
     @property
     def data(self) -> List[int]:

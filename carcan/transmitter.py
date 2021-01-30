@@ -5,8 +5,8 @@ from tx_message import TxMessage, DriveMessage, CheckMessage
 
 class Transmitter:
     def __init__(self, bus: can.interface.Bus):
-        self.drive = None
-        self.check = None
+        self.drive: can.ModifiableCyclicTaskABC = None
+        self.check: can.ModifiableCyclicTaskABC = None
         self._bus = bus
 
     def _create_periodic(self, msg: TxMessage) -> can.ModifiableCyclicTaskABC:
@@ -31,3 +31,7 @@ class Transmitter:
             self.transmit_check_message(msg)
         else:
             raise ValueError(f'Unsupported message type {type(msg)}')
+
+    def shutdown(self) -> None:
+        self.drive.stop()
+        self.check.stop()

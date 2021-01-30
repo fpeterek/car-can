@@ -1,7 +1,7 @@
 import socketserver
 import os
 
-from carinterface import CarInterface
+from car import Car
 
 
 debug = os.getenv('SOCKET_DEBUG') and os.getenv('SOCKET_DEBUG').lower() in ('true', '1')
@@ -9,7 +9,7 @@ debug = os.getenv('SOCKET_DEBUG') and os.getenv('SOCKET_DEBUG').lower() in ('tru
 
 class Server:
 
-    _car: CarInterface = None
+    _car: Car = None
 
     class Handler(socketserver.BaseRequestHandler):
 
@@ -87,9 +87,9 @@ class Server:
                 self.position()
 
     @staticmethod
-    def serve(car: CarInterface = None, host: str = None, port: int = None):
+    def serve(car: Car = None, host: str = None, port: int = None):
 
-        Server._car = car if car is not None else CarInterface(interface="socketcan", channel="can0")
+        Server._car = car if car is not None else Car()
 
         if not host:
             host = os.getenv("SERVER_HOST")

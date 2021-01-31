@@ -1,32 +1,31 @@
-from carinterface import CarInterface
-from steering import Steering
-
 import time
 
 from driving import Driving
+from steering import Steering
+from car import Car
 
 
-def steer_right(car: CarInterface) -> None:
-    car.steer(Steering.max_left)
+def steer_right(car: Car) -> None:
+    car.set_steering(Steering.max_left)
     while car.steering_angle - 4 > Steering.max_left:
-        print('Car steer angle:', car.steering_angle, 'desired angle:', car._desired_steering_angle)
+        print('Car steer angle:', car.steering_angle)
         time.sleep(0.01)
 
 
-def steer_left(car: CarInterface) -> None:
-    car.steer(Steering.max_right)
+def steer_left(car: Car) -> None:
+    car.set_steering(Steering.max_right)
     while car.steering_angle + 4 < Steering.max_right:
-        print('Car steer angle:', car.steering_angle, 'desired angle:', car._desired_steering_angle)
+        print('Car steer angle:', car.steering_angle)
         time.sleep(0.01)
 
 
-def revert(car: CarInterface) -> None:
-    car.forward()
-    while car.steering_angle < Steering.neutral:
+def revert(car: Car) -> None:
+    car.set_steering(Steering.neutral)
+    while car.steering_angle - 1 < Steering.neutral < car.steering_angle + 1:
         time.sleep(0.01)
 
 
-def steering_test(car: CarInterface):
+def steering_test(car: Car):
     for i in range(0, 3):
         steer_left(car)
         time.sleep(1)
@@ -35,25 +34,25 @@ def steering_test(car: CarInterface):
     revert(car)
 
 
-def forward(car: CarInterface) -> None:
-    car.move(Driving.max_forward)
-    while car.velocity != Driving.max_forward:
+def forward(car: Car) -> None:
+    car.set_velocity(Driving.max_forward / 2)
+    while car.velocity < (Driving.max_forward / 2) * 0.9:
         time.sleep(0.05)
 
 
-def backwards(car: CarInterface) -> None:
-    car.move(Driving.max_backwards)
-    while car.velocity != Driving.max_backwards:
+def backwards(car: Car) -> None:
+    car.set_velocity(Driving.max_backwards / 2)
+    while car.velocity > (Driving.max_backwards / 2) * 0.9:
         time.sleep(0.05)
 
 
-def stop(car: CarInterface) -> None:
-    car.stop()
+def stop(car: Car) -> None:
+    car.set_velocity(0)
     while car.velocity != Driving.zero:
         time.sleep(0.05)
 
 
-def driving_test(car: CarInterface):
+def driving_test(car: Car):
     for i in range(0, 3):
         forward(car)
         backwards(car)
@@ -62,13 +61,9 @@ def driving_test(car: CarInterface):
 
 def car_test():
     print("Running test...")
-    car = CarInterface(interface="socketcan", channel="can0")
-    car.move(Driving.max_backwards)
-    print(car._desired_velocity)
-    time.sleep(5)
-    car.stop()
-    # steering_test(car)
-    # driving_test(car)
+    car = Car()
+    steering_test(car)
+    driving_test(car)
     car.shutdown()
     print("Test done...")
 

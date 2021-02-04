@@ -7,11 +7,10 @@ class Steering:
     max_right = 20
     error_tolerance = 2
 
-    can_offset = 127
-    can_min = 0
-    can_max = 254
+    can_min = -127
+    can_max = 127
 
-    ratio = (can_max - can_offset) / max_right
+    ratio = 127 / max_right
 
     @staticmethod
     def trunc_value(value: Union[int, float]) -> int:
@@ -26,12 +25,12 @@ class Steering:
     @staticmethod
     def to_can(value: Union[int, float]) -> int:
         value *= Steering.ratio
-        value += Steering.can_offset
-        return Steering.trunc_can(value)
+        trunced = Steering.trunc_can(value)
+        return trunced if trunced >= 0 else 255+trunced
 
     @staticmethod
     def to_value(value: Union[int, float]) -> int:
-        value -= Steering.can_offset
+        value = value if value <= 127 else value-255
         value /= Steering.ratio
         return Steering.trunc_value(value)
 

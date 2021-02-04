@@ -7,11 +7,10 @@ class Driving:
     max_forward = 30 / 3.6  # m/s
     error_tolerance = max_forward / 10
 
-    can_offset = 127
-    can_min = 0
-    can_max = 254
+    can_max = 127
+    can_min = -127
 
-    ratio = (can_max - can_offset) / max_forward
+    ratio = 127 / max_forward
 
     @staticmethod
     def trunc_value(value: Union[int, float]) -> float:
@@ -25,11 +24,11 @@ class Driving:
     @staticmethod
     def to_can(value: Union[int, float]) -> int:
         value *= Driving.ratio
-        value += Driving.can_offset
-        return Driving.trunc_can(value)
+        trunced = Driving.trunc_can(value)
+        return trunced if trunced >= 0 else 255+trunced
 
     @staticmethod
     def to_value(value: Union[int, float]) -> float:
-        value -= Driving.can_offset
+        value = value if value <= 127 else value-255
         value /= Driving.ratio
         return Driving.trunc_value(value)

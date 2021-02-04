@@ -20,6 +20,8 @@ class Server:
 
             if Server._car is not None:
                 Server._car.drive(v, s)
+            if debug:
+                print('Velocity and steering angle have been set')
 
             self.healthcheck()
 

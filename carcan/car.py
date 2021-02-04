@@ -13,6 +13,17 @@ from driving import Driving
 from steering import Steering
 
 
+def locked(fun):
+    def perform_locked(*args, **kwargs):
+        try:
+            self.lock.acquire()
+            fun(*args, **kwargs)
+        finally:
+            self.lock.release()
+
+    return perform_locked
+
+
 class Car:
     def __init__(self):
         self.drive_msg = DriveMessage()
@@ -22,6 +33,7 @@ class Car:
         self.receiver = Receiver(self._bus, self.update)
         self.data = CarData()
         self.last_update = time.time()
+        self.notifier = can.Notifier(self._bus, [self.receiver])
 
         self.lock = Lock()
 
@@ -29,17 +41,7 @@ class Car:
 
         self.send_messages()
 
-    def locked(self, fun):
-        def perform_locked(*args, **kwargs):
-            try:
-                self.lock.acquire()
-                fun(*args, **kwargs)
-            finally:
-                self.lock.release()
 
-        return perform_locked
-
-    @locked
     def update(self, data: CarData):
         self.last_update = time.time()
         self.data = data
@@ -54,7 +56,6 @@ class Car:
     def is_ok(self):
         return self.data.has_control and not self.is_outdated
 
-    @locked
     def periodic_update(self):
         self.drive_msg.increment_msg_count()
         self.check_msg.increment_msg_count()
@@ -66,32 +67,27 @@ class Car:
         if self.check_msg is not None:
             self.transmitter.transmit(self.check_msg)
 
-    @locked
     def set_velocity(self, velocity: Union[int, float]) -> None:
         self.drive_msg.velocity = Driving.to_can(int(velocity))
 
-    @locked
     def set_acceleration(self, acceleration: int) -> None:
         self.drive_msg.acceleration_level = acceleration
 
-    @locked
     def set_steering(self, steering: Union[int, float]) -> None:
         self.drive_msg.steering = Steering.to_can(int(steering))
 
-    @locked
     def set_steering_precision(self, precision: int) -> None:
         self.drive_msg.steering_level = precision
 
-    @locked
     def drive(self, v: float, s: float) -> None:
-        self.drive_msg.velocity = v
-        self.drive_msg.steering = s
+        print(f'Setting velocity {Driving.to_can(int(v))}')
+        self.drive_msg.velocity = Driving.to_can(int(v))
+        print(f'Setting steering {Steering.to_can(int(s))}')
+        self.drive_msg.steering = Steering.to_can(int(s))
 
-    @locked
     def release_control(self) -> None:
         self.drive_msg.ctrl = 0
 
-    @locked
     def shutdown(self) -> None:
         self.release_control()
         self.periodic_update()
@@ -101,7 +97,6 @@ class Car:
         time.sleep(0.2)
         self._bus.shutdown()
 
-    @locked
     def tx_check(self, rx_check: int) -> None:
         self.check_msg.set_tx_check(rx_check)
 
@@ -117,7 +112,6 @@ class Car:
     def ebrake_enabled(self) -> bool:
         return self.check_msg.stop
 
-    @locked
     def set_ebrake(self, enabled: bool) -> None:
         self.check_msg.stop = enabled
 

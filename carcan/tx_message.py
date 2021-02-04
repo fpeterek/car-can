@@ -1,4 +1,5 @@
 from typing import List
+import struct
 
 import can
 
@@ -14,7 +15,7 @@ class TxMessage:
 
     @staticmethod
     def checksum(data: List[int]) -> int:
-        return crc.calc_crc(data)
+        return crc.calc_crc(data) & 255
 
     def _form_message(self, data: List[int]) -> can.Message:
         return can.Message(arbitration_id=self.msg_id, data=data, is_extended_id=False)

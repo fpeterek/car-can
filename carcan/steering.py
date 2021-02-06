@@ -25,8 +25,8 @@ class Steering:
     @staticmethod
     def to_can(value: Union[int, float]) -> int:
         value *= Steering.ratio
-        trunced = Steering.trunc_can(value)
-        return trunced if trunced >= 0 else 255+trunced
+        truncated = Steering.trunc_can(value)
+        return truncated if truncated >= 0 else 255+truncated
 
     @staticmethod
     def to_value(value: Union[int, float]) -> int:

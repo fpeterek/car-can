@@ -6,21 +6,21 @@ from car import Car
 
 
 def steer_right(car: Car) -> None:
-    car.set_steering(Steering.max_left)
+    car.steering_angle = Steering.max_left
     while car.steering_angle - 4 > Steering.max_left:
         print('Car steer angle:', car.steering_angle)
         time.sleep(0.01)
 
 
 def steer_left(car: Car) -> None:
-    car.set_steering(Steering.max_right)
+    car.steering_angle = Steering.max_right
     while car.steering_angle + 4 < Steering.max_right:
         print('Car steer angle:', car.steering_angle)
         time.sleep(0.01)
 
 
 def revert(car: Car) -> None:
-    car.set_steering(Steering.neutral)
+    car.steering_angle = Steering.neutral
     while car.steering_angle - 1 < Steering.neutral < car.steering_angle + 1:
         time.sleep(0.01)
 
@@ -35,19 +35,19 @@ def steering_test(car: Car):
 
 
 def forward(car: Car) -> None:
-    car.set_velocity(Driving.max_forward / 2)
+    car.velocity = Driving.max_forward / 2
     while car.velocity < (Driving.max_forward / 2) * 0.9:
         time.sleep(0.05)
 
 
 def backwards(car: Car) -> None:
-    car.set_velocity(Driving.max_backwards / 2)
+    car.velocity = Driving.max_backwards / 2
     while car.velocity > (Driving.max_backwards / 2) * 0.9:
         time.sleep(0.05)
 
 
 def stop(car: Car) -> None:
-    car.set_velocity(0)
+    car.velocity = 0
     while car.velocity != Driving.zero:
         time.sleep(0.05)
 

@@ -24,8 +24,8 @@ class Driving:
     @staticmethod
     def to_can(value: Union[int, float]) -> int:
         value *= Driving.ratio
-        trunced = Driving.trunc_can(value)
-        return trunced if trunced >= 0 else 255+trunced
+        truncated = Driving.trunc_can(value)
+        return truncated if truncated >= 0 else 255+truncated
 
     @staticmethod
     def to_value(value: Union[int, float]) -> float:

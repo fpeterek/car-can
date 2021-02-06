@@ -18,7 +18,6 @@ def calc_crc(bytelist: List[int]) -> int:
     crc = 0xFF
 
     for byte in bytelist:
-        # print((crc ^ byte) & 255)
         crc = crc_table[(crc ^ byte) & 255]
 
     return (~crc) & 255

@@ -1,4 +1,3 @@
-from threading import Lock
 from typing import Union
 import time
 
@@ -13,17 +12,6 @@ from driving import Driving
 from steering import Steering
 
 
-def locked(fun):
-    def perform_locked(*args, **kwargs):
-        try:
-            self.lock.acquire()
-            fun(*args, **kwargs)
-        finally:
-            self.lock.release()
-
-    return perform_locked
-
-
 class Car:
     def __init__(self):
         self.drive_msg = DriveMessage()
@@ -35,18 +23,21 @@ class Car:
         self.last_update = time.time()
         self.notifier = can.Notifier(self._bus, [self.receiver])
 
-        self.lock = Lock()
-
         gpsd.connect()
 
         self.send_messages()
 
-
     def update(self, data: CarData):
         self.last_update = time.time()
         self.data = data
-        self.tx_check(data.rx_check)
-        self.periodic_update()
+        if self.tx_check(data.rx_check):
+            self.periodic_update()
+        else:
+            self.send_messages()
+
+    def can_error(self):
+        self.check_msg.invalid_message_received()
+        self.send_messages()
 
     @property
     def is_outdated(self):
@@ -60,24 +51,13 @@ class Car:
         self.drive_msg.increment_msg_count()
         self.check_msg.increment_msg_count()
         self.send_messages()
+        self.check_msg.clear_errors()
 
     def send_messages(self):
         if self.drive_msg is not None:
             self.transmitter.transmit(self.drive_msg)
         if self.check_msg is not None:
             self.transmitter.transmit(self.check_msg)
-
-    def set_velocity(self, velocity: Union[int, float]) -> None:
-        self.drive_msg.velocity = Driving.to_can(int(velocity))
-
-    def set_acceleration(self, acceleration: int) -> None:
-        self.drive_msg.acceleration_level = acceleration
-
-    def set_steering(self, steering: Union[int, float]) -> None:
-        self.drive_msg.steering = Steering.to_can(int(steering))
-
-    def set_steering_precision(self, precision: int) -> None:
-        self.drive_msg.steering_level = precision
 
     def drive(self, v: float, s: float) -> None:
         print(f'Setting velocity {Driving.to_can(int(v))}')
@@ -97,22 +77,34 @@ class Car:
         time.sleep(0.2)
         self._bus.shutdown()
 
-    def tx_check(self, rx_check: int) -> None:
-        self.check_msg.set_tx_check(rx_check)
+    def tx_check(self, rx_check: int) -> bool:
+        if rx_check > self.check_msg.tx_check or self.check_msg.tx_check == 255:
+            self.check_msg.set_tx_check(rx_check)
+            return True
+        return False
 
     @property
     def velocity(self) -> float:
         return self.data.velocity
 
+    @velocity.setter
+    def velocity(self, velocity: Union[int, float]) -> None:
+        self.drive_msg.velocity = Driving.to_can(int(velocity))
+
     @property
     def steering_angle(self) -> float:
         return self.data.steering_angle
 
+    @steering_angle.setter
+    def steering_angle(self, steering: Union[int, float]) -> None:
+        self.drive_msg.steering = Steering.to_can(int(steering))
+
     @property
-    def ebrake_enabled(self) -> bool:
+    def ebrake(self) -> bool:
         return self.check_msg.stop
 
-    def set_ebrake(self, enabled: bool) -> None:
+    @ebrake.setter
+    def ebrake(self, enabled: bool) -> None:
         self.check_msg.stop = enabled
 
     @property

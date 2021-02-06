@@ -1,3 +1,5 @@
+from typing import Optional
+
 import can
 
 from tx_message import TxMessage, DriveMessage, CheckMessage
@@ -5,8 +7,8 @@ from tx_message import TxMessage, DriveMessage, CheckMessage
 
 class Transmitter:
     def __init__(self, bus: can.interface.Bus):
-        self.drive: can.ModifiableCyclicTaskABC = None
-        self.check: can.ModifiableCyclicTaskABC = None
+        self.drive: Optional[can.ModifiableCyclicTaskABC] = None
+        self.check: Optional[can.ModifiableCyclicTaskABC] = None
         self._bus = bus
 
     def _create_periodic(self, msg: TxMessage) -> can.ModifiableCyclicTaskABC:

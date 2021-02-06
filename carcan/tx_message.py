@@ -1,5 +1,4 @@
 from typing import List
-import struct
 
 import can
 
@@ -58,16 +57,24 @@ class CheckMessage(TxMessage):
 
         self.stop = 0
         self.tx_check = 0
-        self.fault_count = 0
-        self.fault_codes = 0
+        self.fault_code_1 = 0
+        self.fault_code_2 = 0
         self.reserved1 = 0
         self.reserved2 = 0
 
     def set_tx_check(self, rx_check: int) -> None:
         self.tx_check = (rx_check + 1) % 256
 
+    def invalid_message_received(self) -> None:
+        self.fault_code_1 = 1
+
+    def clear_errors(self) -> None:
+        self.fault_code_1 = 0
+        self.fault_code_2 = 2
+
     @property
     def data(self) -> List[int]:
         return [
-            self.stop, self.tx_check, self.fault_count, self.fault_codes, self.reserved1, self.reserved2, self.msg_count
+            self.stop, self.tx_check, self.fault_code_1, self.fault_code_2,
+            self.reserved1, self.reserved2, self.msg_count
         ]

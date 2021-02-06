@@ -10,10 +10,13 @@ from driving import Driving
 
 class Receiver(can.listener.Listener):
 
-    def __init__(self, bus: can.interface.Bus, on_update: Callable[[CarData], None]):
+    def __init__(self, bus: can.interface.Bus, on_update: Callable[[CarData], None],
+                 on_can_error: Callable[[], None]):
+
         self._bus = bus
         self.car_data = CarData()
         self.on_update = on_update
+        self.on_can_error = on_can_error
 
         self.handlers = {
             5: self.check,
@@ -42,7 +45,7 @@ class Receiver(can.listener.Listener):
 
     def data1(self, msg: can.Message):
         if not Receiver.check_integrity(msg.data):
-            return
+            return self.on_can_error()
         data = msg.data
 
         self.car_data.steering_angle = Steering.to_value(data[0])
@@ -55,10 +58,9 @@ class Receiver(can.listener.Listener):
 
     def data2(self, msg: can.Message):
         if not Receiver.check_integrity(msg.data):
-            return
+            return self.on_can_error()
         data = msg.data
 
-        # print(f'Has control: {data[0]}')
         self.car_data.has_control = bool(data[0])
         self.car_data.acceleration_level = data[1]
         self.car_data.steering_level = data[2]
@@ -70,5 +72,4 @@ class Receiver(can.listener.Listener):
     def on_message_received(self, msg: can.Message):
         fn = self.handlers.get(msg.arbitration_id)
         if fn is not None:
-            # print(msg.arbitration_id)
             fn(msg)

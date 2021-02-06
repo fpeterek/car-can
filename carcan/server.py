@@ -37,7 +37,8 @@ class Server:
 
             v = int((Server._car.velocity if Server._car is not None else 0) * 10)
             s = Server._car.steering_angle if Server._car is not None else 0
-            b = int(Server._car.ebrake_enabled if Server._car is not None else False)
+            b = int(Server._car.ebrake if Server._car is not None else False)
+
             if debug:
                 print(f'Driving data (v, s) = ({v}, {s})')
 
@@ -51,7 +52,7 @@ class Server:
                 print(f'Emergency brake {["released", "engaged"][int(brake)]}')
 
             if Server._car is not None:
-                Server._car.set_ebrake(brake)
+                Server._car.ebrake = brake
 
             self.healthcheck()
 

@@ -10,6 +10,7 @@ from receiver import Receiver
 from car_data import CarData
 from driving import Driving
 from steering import Steering
+from pi_controller import PIController
 
 
 class Car:
@@ -22,6 +23,7 @@ class Car:
         self.data = CarData()
         self.last_update = time.time()
         self.notifier = can.Notifier(self._bus, [self.receiver])
+        self.controller = PIController(proportional=0.05, integral=0.1)
 
         gpsd.connect()
 
@@ -48,9 +50,19 @@ class Car:
         return self.data.has_control and not self.is_outdated
 
     def periodic_update(self):
+        self.increment_msg_counts()
+        self.update_from_controller()
+        self.send_messages()
+        self.clear_errors()
+
+    def increment_msg_counts(self) -> None:
         self.drive_msg.increment_msg_count()
         self.check_msg.increment_msg_count()
-        self.send_messages()
+
+    def update_from_controller(self) -> None:
+        self.drive_msg.velocity = Driving.to_can(self.controller.update(self.velocity))
+
+    def clear_errors(self) -> None:
         self.check_msg.clear_errors()
 
     def send_messages(self):
@@ -89,7 +101,8 @@ class Car:
 
     @velocity.setter
     def velocity(self, velocity: Union[int, float]) -> None:
-        self.drive_msg.velocity = Driving.to_can(int(velocity))
+        self.controller.target = velocity
+        # self.drive_msg.velocity = Driving.to_can(int(velocity))
 
     @property
     def steering_angle(self) -> float:
